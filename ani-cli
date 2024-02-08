@@ -188,15 +188,15 @@ search_anime() {
     search_page=$(curl -e "$monoschinos_url" -s -G "$monoschinos_busqueda" --data-urlencode "q=$1" -A "$agent" | sed -z 's|.*\(<!-- firstrow -->.*</section>\).*|\1|')
 
     echo "$search_page" | grep -o '<a href="[^"]*"' | sed 's/<a href="//; s/"$//' | while read -r href; do
-        anime_name=$(echo "$search_page" | tr -d '\n' | grep -zoP "<a href=\"$href\">.*?</h3>" | sed -n 's|.*"seristitles">\(.*\)</h3>|\1|p')
+        anime_name=$(echo "$search_page" | tr -d '\n' | grep -zoP "<a href=\"$href\">.*?</h3>" | tr -d '\0' | sed -n 's|.*"seristitles">\(.*\)</h3>|\1|p')
         anime_id=$(echo "$href" | sed 's|.*anime\/\(.*\)-sub-espanol|\1|')
-        echo "${anime_id}\t${anime_name}"
+        echo -e "${anime_id}\t${anime_name}"
     done
 }
 
 # get the episodes list of the selected anime
 episodes_list() {
-    curl -e "$monoschinos_url" -s -G "${monoschinos_anime}/$*" -A "$agent" | sed -n 's|.*data-episode="\(.*\)".*|\1|p'
+    curl -e "$monoschinos_url" -s -G "${monoschinos_anime}/$*" -A "$agent" | sed -n 's|.*data-episode="\(.*\)".*|\1|p' | tr -d '\0'
 }
 
 # PLAYING
