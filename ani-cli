@@ -166,9 +166,11 @@ select_quality() {
 # gets embed urls, collects direct links into provider files, selects one with desired quality into $episode
 get_episode_url() {
     # get the embed urls of the selected episode
-    episode_embed_gql="query (\$showId: String!, \$translationType: VaildTranslationTypeEnumType!, \$episodeString: String!) {    episode(        showId: \$showId        translationType: \$translationType        episodeString: \$episodeString    ) {        episodeString sourceUrls    }}"
-
-    resp=$(curl -e "$allanime_refr" -s -G "${allanime_api}/api" --data-urlencode "variables={\"showId\":\"$id\",\"translationType\":\"$mode\",\"episodeString\":\"$ep_no\"}" --data-urlencode "query=$episode_embed_gql" -A "$agent" | tr '{}' '\n' | sed 's|\\u002F|\/|g;s|\\||g' | sed -nE 's|.*sourceUrl":"--([^"]*)".*sourceName":"([^"]*)".*|\2 :\1|p')
+    resp=$(curl -e "$monoschinos_url" -s -G "${monoschinos_episodio}/${id}-episodio-${ep_no}" -A "$agent" | sed -n 's|.*class="play-video" data-player="\(.*\)">.*|\1|p' | while read -r link; do
+        decoded_link=$(echo "$link" | base64 -d)
+        echo "$decoded_link"
+    done)
+    echo "$resp" > capitulo.txt
     # generate links into sequential files
     cache_dir="$(mktemp -d)"
     providers="1 2 3 4 5"
@@ -190,7 +192,8 @@ search_anime() {
     echo "$search_page" | grep -o '<a href="[^"]*"' | sed 's/<a href="//; s/"$//' | while read -r href; do
         anime_name=$(echo "$search_page" | tr -d '\n' | grep -zoP "<a href=\"$href\">.*?</h3>" | tr -d '\0' | sed -n 's|.*"seristitles">\(.*\)</h3>|\1|p')
         anime_id=$(echo "$href" | sed 's|.*anime\/\(.*\)-sub-espanol|\1|')
-        echo -e "${anime_id}\t${anime_name}"
+        # echo -e "${anime_id}\t${anime_name}"
+        echo "${anime_id}\t${anime_name}"
     done
 }
 
@@ -299,6 +302,7 @@ allanime_api="https://api.${allanime_base}"
 monoschinos_url="https://monoschinos2.com"
 monoschinos_busqueda="${monoschinos_url}/buscar"
 monoschinos_anime="${monoschinos_url}/anime"
+monoschinos_episodio="${monoschinos_url}/ver"
 
 mode="${ANI_CLI_MODE:-sub}"
 download_dir="${ANI_CLI_DOWNLOAD_DIR:-.}"
